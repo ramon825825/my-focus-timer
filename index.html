@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#121212">
+  <meta name="description" content="數位極簡專注計時器，具備離線存取、通知提醒與喚醒鎖。">
+  <link rel="manifest" href="manifest.json">
+  <title>數位極簡專注計時器</title>
+  <style>
+    :root {
+      --bg-start: #121212;
+      --bg-end: #173331;
+      --panel: rgba(18, 18, 18, 0.78);
+      --line: rgba(120, 146, 98, 0.24);
+      --text-main: #d8e0d1;
+      --text-soft: rgba(216, 224, 209, 0.7);
+      --celadon: #789262;
+      --vermilion: #b22222;
+      --shadow: rgba(0, 0, 0, 0.42);
+      --progress: 0%;
+      --bg-shift: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #121212;
+      color: var(--text-main);
+      font-family: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top, rgba(120, 146, 98, 0.14), transparent 42%),
+        linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      transition: background 1s linear;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      pointer-events: none;
+      opacity: 0.35;
+      filter: blur(2px);
+    }
+
+    body::before {
+      width: 42vmax;
+      height: 42vmax;
+      top: -10vmax;
+      right: -14vmax;
+      background: radial-gradient(circle, rgba(120, 146, 98, 0.12), transparent 70%);
+    }
+
+    body::after {
+      width: 54vmax;
+      height: 20vmax;
+      bottom: -6vmax;
+      left: -8vmax;
+      background:
+        linear-gradient(180deg, rgba(23, 51, 49, calc(var(--bg-shift) * 0.7)) 0%, transparent 100%),
+        radial-gradient(circle, rgba(178, 34, 34, 0.08), transparent 68%);
+    }
+
+    .app {
+      position: relative;
+      width: min(92vw, 540px);
+      padding: 3rem 1.5rem 2rem;
+    }
+
+    .panel {
+      position: relative;
+      padding: 2rem 1.5rem 1.75rem;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent),
+        var(--panel);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 24px 60px var(--shadow);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, transparent 0%, rgba(120, 146, 98, 0.05) 50%, transparent 100%),
+        repeating-linear-gradient(
+          180deg,
+          transparent 0 22px,
+          rgba(255, 255, 255, 0.015) 22px 23px
+        );
+      opacity: 0.7;
+      z-index: -1;
+    }
+
+    .crest {
+      text-align: center;
+      color: var(--text-soft);
+      letter-spacing: 0.35em;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+      text-indent: 0.35em;
+    }
+
+    .timer-wrap {
+      display: grid;
+      place-items: center;
+      gap: 0.75rem;
+      margin: 1.25rem 0 1.5rem;
+    }
+
+    .timer-ring {
+      width: min(74vw, 320px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at center, rgba(18, 18, 18, 0.96) 0 58%, transparent 59%),
+        conic-gradient(var(--celadon) var(--progress), rgba(120, 146, 98, 0.12) 0);
+      box-shadow:
+        inset 0 0 0 1px rgba(120, 146, 98, 0.15),
+        0 0 36px rgba(120, 146, 98, 0.12);
+      animation: breathe 2.8s ease-in-out infinite;
+    }
+
+    .timer-ring.is-paused {
+      animation-play-state: paused;
+    }
+
+    .timer-ring.is-finished {
+      background:
+        radial-gradient(circle at center, rgba(18, 18, 18, 0.96) 0 58%, transparent 59%),
+        conic-gradient(var(--vermilion) 100%, rgba(178, 34, 34, 0.14) 0);
+      box-shadow:
+        inset 0 0 0 1px rgba(178, 34, 34, 0.24),
+        0 0 42px rgba(178, 34, 34, 0.2);
+    }
+
+    .time {
+      font-size: clamp(4rem, 14vw, 6rem);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.06em;
+      color: var(--text-main);
+      text-shadow: 0 0 20px rgba(120, 146, 98, 0.12);
+      margin-left: 0.06em;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-soft);
+      font-size: 0.98rem;
+      letter-spacing: 0.18em;
+      text-indent: 0.18em;
+      min-height: 1.5em;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(120, 146, 98, 0.25);
+      border-radius: 999px;
+      padding: 0.95rem 0.75rem;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+      font: inherit;
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, color 140ms ease;
+    }
+
+    button:hover,
+    button:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+      border-color: rgba(120, 146, 98, 0.48);
+      background: rgba(120, 146, 98, 0.08);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button[data-tone="accent"] {
+      border-color: rgba(178, 34, 34, 0.4);
+      color: #f0d3d3;
+    }
+
+    .status {
+      margin-top: 1rem;
+      min-height: 1.2rem;
+      text-align: center;
+      color: rgba(120, 146, 98, 0.9);
+      font-size: 0.92rem;
+      letter-spacing: 0.08em;
+    }
+
+    @keyframes breathe {
+      0%, 100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.016);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        padding: 1.25rem;
+      }
+
+      .panel {
+        padding: 1.5rem 1rem 1.25rem;
+        border-radius: 24px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="panel" aria-label="番茄鐘">
+      <div class="crest">數 位 極 簡</div>
+      <div class="timer-wrap">
+        <div class="timer-ring is-paused" id="timerRing" aria-hidden="true">
+          <div class="time" id="timeDisplay">25:00</div>
+        </div>
+        <div class="subtitle" id="subtitle">靜心凝神，落筆如墨</div>
+      </div>
+      <div class="controls">
+        <button id="startBtn" type="button">開始</button>
+        <button id="pauseBtn" type="button">暫停</button>
+        <button id="resetBtn" type="button" data-tone="accent">重置</button>
+      </div>
+      <div class="status" id="statusText" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    const DURATION_SECONDS = 25 * 60;
+    const timeDisplay = document.getElementById("timeDisplay");
+    const subtitle = document.getElementById("subtitle");
+    const statusText = document.getElementById("statusText");
+    const timerRing = document.getElementById("timerRing");
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let remainingSeconds = DURATION_SECONDS;
+    let endTime = 0;
+    let timerId = null;
+    let wakeLock = null;
+    let isRunning = false;
+    let notified = false;
+
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function setStatus(message) {
+      statusText.textContent = message;
+    }
+
+    function vibrate(pattern) {
+      if ("vibrate" in navigator) {
+        navigator.vibrate(pattern);
+      }
+    }
+
+    // Sync ring progress, copy, and the slow background tint as time passes.
+    function updateVisuals() {
+      const elapsed = DURATION_SECONDS - remainingSeconds;
+      const progress = Math.min((elapsed / DURATION_SECONDS) * 100, 100);
+      const bgShift = Math.min(elapsed / DURATION_SECONDS, 1).toFixed(3);
+      document.documentElement.style.setProperty("--progress", `${progress}%`);
+      document.documentElement.style.setProperty("--bg-shift", bgShift);
+      timeDisplay.textContent = formatTime(remainingSeconds);
+
+      if (remainingSeconds === 0) {
+        subtitle.textContent = "一炷心火已圓滿";
+        timerRing.classList.add("is-finished");
+      } else if (isRunning) {
+        subtitle.textContent = "專注流轉，氣息平穩";
+        timerRing.classList.remove("is-finished");
+      } else {
+        subtitle.textContent = remainingSeconds === DURATION_SECONDS ? "靜心凝神，落筆如墨" : "暫歇片刻，意守丹田";
+        timerRing.classList.remove("is-finished");
+      }
+
+      timerRing.style.setProperty("--progress", `${progress}%`);
+      timerRing.classList.toggle("is-paused", !isRunning);
+    }
+
+    async function requestNotificationPermission() {
+      if (!("Notification" in window)) {
+        return "unsupported";
+      }
+
+      if (Notification.permission === "default") {
+        return Notification.requestPermission();
+      }
+
+      return Notification.permission;
+    }
+
+    // Prefer SW notifications so reminders still behave well in installed mode.
+    async function showTimerNotification() {
+      const permission = await requestNotificationPermission();
+      if (permission !== "granted") {
+        setStatus("時間已到，通知權限未開啟。");
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.getRegistration();
+      const title = "番茄鐘已完成";
+      const options = {
+        body: "25 分鐘專注結束，起身舒展一下。",
+        icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='28' fill='%23121212'/%3E%3Ccircle cx='64' cy='64' r='36' fill='none' stroke='%23789262' stroke-width='8'/%3E%3Cpath d='M64 64V40M64 64L80 74' stroke='%23B22222' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E",
+        badge: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='20' fill='%23789262'/%3E%3Ccircle cx='48' cy='48' r='24' fill='none' stroke='%23121212' stroke-width='8'/%3E%3C/svg%3E",
+        tag: "digital-minimal-timer",
+        renotify: true
+      };
+
+      if (registration) {
+        await registration.showNotification(title, options);
+      } else {
+        new Notification(title, options);
+      }
+    }
+
+    // Keep the screen awake only while the timer is actively running.
+    async function acquireWakeLock() {
+      if (!("wakeLock" in navigator) || wakeLock) {
+        return;
+      }
+
+      try {
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => {
+          wakeLock = null;
+        });
+        setStatus("喚醒鎖已啟用，螢幕將保持亮起。");
+      } catch (error) {
+        setStatus("此裝置暫時無法保持螢幕常亮。");
+      }
+    }
+
+    async function releaseWakeLock() {
+      if (!wakeLock) {
+        return;
+      }
+
+      try {
+        await wakeLock.release();
+      } finally {
+        wakeLock = null;
+      }
+    }
+
+    function completeTimer() {
+      clearInterval(timerId);
+      timerId = null;
+      isRunning = false;
+      remainingSeconds = 0;
+      updateVisuals();
+      releaseWakeLock();
+
+      if (!notified) {
+        notified = true;
+        vibrate([180, 90, 180, 90, 260]);
+        showTimerNotification().catch(() => {
+          setStatus("時間已到，但通知顯示失敗。");
+        });
+      }
+
+      setStatus("專注完成，可以起身活動。");
+    }
+
+    // Derive remaining time from an absolute end timestamp to reduce drift.
+    function tick() {
+      const secondsLeft = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+      remainingSeconds = secondsLeft;
+      updateVisuals();
+
+      if (secondsLeft === 0) {
+        completeTimer();
+      }
+    }
+
+    async function startTimer() {
+      if (isRunning) {
+        return;
+      }
+
+      if (remainingSeconds === 0) {
+        remainingSeconds = DURATION_SECONDS;
+      }
+
+      isRunning = true;
+      notified = false;
+      endTime = Date.now() + remainingSeconds * 1000;
+      timerId = setInterval(tick, 250);
+      tick();
+      vibrate(24);
+      await acquireWakeLock();
+      requestNotificationPermission().catch(() => {});
+      setStatus("番茄鐘運行中。");
+    }
+
+    async function pauseTimer() {
+      if (!isRunning) {
+        return;
+      }
+
+      clearInterval(timerId);
+      timerId = null;
+      remainingSeconds = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+      isRunning = false;
+      updateVisuals();
+      vibrate(16);
+      await releaseWakeLock();
+      setStatus("已暫停。");
+    }
+
+    async function resetTimer() {
+      clearInterval(timerId);
+      timerId = null;
+      isRunning = false;
+      notified = false;
+      remainingSeconds = DURATION_SECONDS;
+      updateVisuals();
+      vibrate([14, 32, 14]);
+      await releaseWakeLock();
+      setStatus("已重置為 25 分鐘。");
+    }
+
+    document.addEventListener("visibilitychange", async () => {
+      if (document.visibilityState === "visible" && isRunning) {
+        await acquireWakeLock();
+      }
+    });
+
+    startBtn.addEventListener("click", startTimer);
+    pauseBtn.addEventListener("click", pauseTimer);
+    resetBtn.addEventListener("click", resetTimer);
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {
+          setStatus("離線功能註冊失敗。");
+        });
+      });
+    }
+
+    updateVisuals();
+  </script>
+</body>
+</html>
