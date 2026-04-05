@@ -235,16 +235,20 @@
     .music-frame {
       margin-top: 1rem;
       border: 1px solid rgba(120, 146, 98, 0.2);
-      border-radius: 22px;
+      border-radius: 15px;
       overflow: hidden;
       background: rgba(0, 0, 0, 0.22);
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
     }
 
+    .music-frame.is-hidden {
+      display: none;
+    }
+
     .music-player {
       display: block;
       width: 100%;
-      aspect-ratio: 16 / 9;
+      height: 200px;
       border: 0;
       background: linear-gradient(180deg, rgba(23, 51, 49, 0.2), rgba(18, 18, 18, 0.95));
     }
@@ -362,7 +366,7 @@
           <button id="clearMusicBtn" type="button">清空</button>
           <button id="focusMixBtn" type="button">專注推薦</button>
         </div>
-        <div class="music-frame">
+        <div class="music-frame is-hidden" id="musicFrame">
           <iframe
             class="music-player"
             id="musicPlayer"
@@ -370,7 +374,7 @@
             loading="lazy"
             allow="autoplay; encrypted-media; picture-in-picture"
             referrerpolicy="strict-origin-when-cross-origin"
-            src="https://www.youtube.com/embed?listType=search&list=lofi%20focus%20music"
+            src="about:blank"
           ></iframe>
         </div>
         <div class="music-hint">頁內播放使用 YouTube 搜尋播放器；若想切到完整介面，可直接開啟 YouTube Music。</div>
@@ -394,6 +398,7 @@
     const ytMusicBtn = document.getElementById("ytMusicBtn");
     const clearMusicBtn = document.getElementById("clearMusicBtn");
     const focusMixBtn = document.getElementById("focusMixBtn");
+    const musicFrame = document.getElementById("musicFrame");
     const musicPlayer = document.getElementById("musicPlayer");
 
     const DEFAULT_MUSIC_QUERY = "lofi focus music";
@@ -424,7 +429,7 @@
     }
 
     function buildMusicEmbedUrl(query) {
-      return `${EMBED_PREFIX}${encodeURIComponent(query)}`;
+      return `${EMBED_PREFIX}${encodeURIComponent(`${query} music`)}`;
     }
 
     function buildYouTubeMusicUrl(query) {
@@ -439,6 +444,8 @@
         return;
       }
 
+      musicQuery.blur();
+      musicFrame.classList.remove("is-hidden");
       musicPlayer.src = buildMusicEmbedUrl(safeQuery);
       vibrate(18);
       setStatus(`已載入「${safeQuery}」的音樂搜尋。`);
@@ -636,7 +643,9 @@
     });
     clearMusicBtn.addEventListener("click", () => {
       musicQuery.value = "";
+      musicFrame.classList.add("is-hidden");
       musicPlayer.src = "about:blank";
+      musicQuery.blur();
       vibrate(14);
       setStatus("已清空播放器。");
     });
