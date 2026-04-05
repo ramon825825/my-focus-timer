@@ -1,13 +1,13 @@
 {
-  "name": "數位極簡專注計時器",
-  "short_name": "專注計時器",
+  "name": "極簡專注計時器",
+  "short_name": "專注",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2523/2523235.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
