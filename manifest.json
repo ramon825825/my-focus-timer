@@ -1,15 +1,25 @@
 {
-  "name": "極簡專注計時器",
-  "short_name": "專注",
+  "name": "數位極簡專注計時器",
+  "short_name": "專注計時器",
+  "description": "25 分鐘番茄鐘，具備離線存取、通知提醒、螢幕常亮與音樂搜尋播放。",
+  "lang": "zh-Hant",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#121212",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2523/2523235.png",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%23121212'/%3E%3Ccircle cx='96' cy='104' r='50' fill='none' stroke='%23789262' stroke-width='12'/%3E%3Cpath d='M96 104V70M96 104L124 122' stroke='%23B22222' stroke-width='12' stroke-linecap='round'/%3E%3Cpath d='M76 36h40' stroke='%23789262' stroke-width='10' stroke-linecap='round'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23121212'/%3E%3Ccircle cx='256' cy='280' r='136' fill='none' stroke='%23789262' stroke-width='32'/%3E%3Cpath d='M256 280V188M256 280L334 330' stroke='%23B22222' stroke-width='32' stroke-linecap='round'/%3E%3Cpath d='M200 92h112' stroke='%23789262' stroke-width='26' stroke-linecap='round'/%3E%3C/svg%3E",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]

@@ -1,4 +1,4 @@
-const CACHE_NAME = "digital-minimal-timer-v1";
+const CACHE_NAME = "digital-minimal-timer-v2";
 const APP_SHELL = ["./", "./index.html", "./manifest.json", "./sw.js"];
 
 // Cache the app shell up front so the timer opens even without a network.
