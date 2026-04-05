@@ -371,7 +371,6 @@
             class="music-player"
             id="musicPlayer"
             title="音樂播放器"
-            loading="lazy"
             allow="autoplay; encrypted-media; picture-in-picture"
             referrerpolicy="strict-origin-when-cross-origin"
             src="about:blank"
@@ -429,7 +428,7 @@
     }
 
     function buildMusicEmbedUrl(query) {
-      return `${EMBED_PREFIX}${encodeURIComponent(`${query} music`)}`;
+      return `${EMBED_PREFIX}${encodeURIComponent(`${query} music`)}&autoplay=1&mute=1`;
     }
 
     function buildYouTubeMusicUrl(query) {
